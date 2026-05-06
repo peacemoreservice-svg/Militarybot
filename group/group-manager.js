@@ -17,6 +17,16 @@ class GroupManager {
       'account available',
       'for sale'
     ];
+    this.groupMentions = [
+      'join my group',
+      'join this group',
+      'add to my group',
+      'add to group',
+      'group link',
+      'group invite',
+      'join our group',
+      'join the group'
+    ];
   }
 
   loadGroups() {
@@ -90,6 +100,26 @@ class GroupManager {
     for (const word of this.bannedWords) {
       if (lowerMessage.includes(word.toLowerCase())) {
         return word;
+      }
+    }
+    return null;
+  }
+
+  containsGroupMention(message) {
+    const lowerMessage = message.toLowerCase();
+    for (const mention of this.groupMentions) {
+      if (lowerMessage.includes(mention.toLowerCase())) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  getGroupMention(message) {
+    const lowerMessage = message.toLowerCase();
+    for (const mention of this.groupMentions) {
+      if (lowerMessage.includes(mention.toLowerCase())) {
+        return mention;
       }
     }
     return null;
