@@ -62,6 +62,30 @@ class GroupHandler {
           if (warningMessage) await message.reply(warningMessage);
         }
       }
+
+      // Check for group mentions in status
+      if (manager.containsGroupMention(messageText)) {
+        if (!isAdmin) {
+          await message.delete(true);
+          const groupMention = manager.getGroupMention(messageText);
+          const warningCount = manager.addWarning(groupId, senderId);
+          let warningMessage = '';
+          if (warningCount === 1) warningMessage = `⚠️ Group promotion not allowed. (Warning 1/4)`;
+          else if (warningCount === 2) warningMessage = `⚠️ Stop promoting groups. (Warning 2/4)`;
+          else if (warningCount === 3) warningMessage = `⚠️ One more warning and you will be removed. (Warning 3/4)`;
+          else if (warningCount >= 4) {
+            warningMessage = '🚫 You have been removed from the group (4 warnings).';
+            setTimeout(async () => {
+              try {
+                await chat.removeParticipants([senderId]);
+              } catch (error) {
+                console.error('Error removing member:', error.message);
+              }
+            }, 2000);
+          }
+          if (warningMessage) await message.reply(warningMessage);
+        }
+      }
     } catch (error) {
       console.error('Error handling group message:', error.message);
     }
