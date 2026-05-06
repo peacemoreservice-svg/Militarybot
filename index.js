@@ -1,11 +1,11 @@
 const { Client, LocalAuth } = require('whatsapp-web.js');
 const express = require('express');
+const GroupHandler = require('./group/group-handler');
 require('dotenv').config();
 
 const app = express();
 app.use(express.json());
 
-// Initialize WhatsApp Client with phone number authentication
 const client = new Client({
   authStrategy: new LocalAuth(),
   puppeteer: {
@@ -18,7 +18,6 @@ const client = new Client({
   }
 });
 
-// Phone number linking (instead of QR code)
 const PHONE_NUMBER = process.env.PHONE_NUMBER;
 
 client.on('loading', () => {
@@ -37,17 +36,21 @@ client.on('ready', () => {
   console.log('✓ WhatsApp client is ready!');
 });
 
-// Handle incoming messages
 client.on('message', async (message) => {
   console.log(`[${new Date().toLocaleTimeString()}] Message from ${message.from}: ${message.body}`);
 
-  // Simple command handling
-  if (message.body === '/help') {
-    await message.reply('Available commands:\n/help - Show this message\n/ping - Test bot');
-  } else if (message.body === '/ping') {
-    await message.reply('Pong! 🤖');
-  } else {
-    await message.reply('Echo: ' + message.body);
+  if (message.isGroup) {
+    await GroupHandler.handleGroupMessage(message, client);
+  }
+
+  if (!message.isGroup) {
+    if (message.body === '/help') {
+      await message.reply('Available commands:\n/help - Show this message\n/ping - Test bot');
+    } else if (message.body === '/ping') {
+      await message.reply('Pong! 🤖');
+    } else {
+      await message.reply('Echo: ' + message.body);
+    }
   }
 });
 
@@ -55,12 +58,10 @@ client.on('disconnected', (reason) => {
   console.log('WhatsApp disconnected:', reason);
 });
 
-// Health check endpoint
 app.get('/health', (req, res) => {
   res.json({ status: 'ok', bot_ready: client.info ? true : false });
 });
 
-// Send message endpoint
 app.post('/send-message', async (req, res) => {
   const { phoneNumber, message } = req.body;
 
